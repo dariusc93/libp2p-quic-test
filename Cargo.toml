@@ -1,0 +1,45 @@
+[package]
+name = "libp2p-quic-test"
+version = "0.1.0"
+edition = "2021"
+description = """
+Libp2p quick test
+"""
+rust-version = "1.60"
+license = "Apache-2.0 OR MIT"
+repository = "https://github.com/dariusc93/libp2p-quic-test"
+authors = ["Darius Clark"]
+readme = "README.md"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+libp2p = { version = "0.50", features = [
+    "gossipsub",
+    "autonat",
+    "relay",
+    "dcutr",
+    "identify",
+    "kad",
+    "websocket",
+    "tcp",
+    "mplex",
+    "noise",
+    "ping",
+    "yamux",
+    "dns",
+    "mdns",
+    "tokio",
+    "rsa",
+    "serde",
+    "quic",
+    "tls",
+] }
+env_logger = "0.9"
+tokio = { version = "1", features = ["full"] }
+futures = { version = "0.3" }
+futures-timer = "3.0"
+anyhow = { version = "1" }
+
+[patch.crates-io]
+libp2p = { git = "https://github.com/kpp/rust-libp2p", branch = "libp2p-quic" }
