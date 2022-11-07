@@ -76,7 +76,7 @@ async fn main() -> anyhow::Result<()> {
                                 .any(|p| p.as_bytes() == libp2p::autonat::DEFAULT_PROTOCOL_NAME)
                             {
                                 for addr in &listen_addrs {
-                                    swarm.behaviour_mut().kademlia.add_address(&peer_id, addr.clone());
+                                    swarm.behaviour_mut().autonat.add_server(peer_id, Some(addr.clone()));
                                 }
                             }
                     }
