@@ -20,6 +20,7 @@ use std::time::Duration;
 
 pub fn build_transport(
     keypair: identity::Keypair,
+    quic: bool,
     relay: Option<ClientTransport>,
 ) -> io::Result<Boxed<(PeerId, StreamMuxerBox)>> {
     let xx_keypair = noise::Keypair::<noise::X25519Spec>::new()
@@ -69,11 +70,14 @@ pub fn build_transport(
             .map_err(|err| Error::new(ErrorKind::Other, err))
             .boxed(),
     };
-    let transport = OrTransport::new(quic_transport, transport)
-        .map(|either_output, _| match either_output {
-            EitherOutput::First((peer_id, muxer)) => (peer_id, StreamMuxerBox::new(muxer)),
-            EitherOutput::Second((peer_id, muxer)) => (peer_id, StreamMuxerBox::new(muxer)),
-        })
-        .boxed();
+    let transport = match quic {
+        true => OrTransport::new(quic_transport, transport)
+            .map(|either_output, _| match either_output {
+                EitherOutput::First((peer_id, muxer)) => (peer_id, StreamMuxerBox::new(muxer)),
+                EitherOutput::Second((peer_id, muxer)) => (peer_id, StreamMuxerBox::new(muxer)),
+            })
+            .boxed(),
+        false => transport,
+    };
     Ok(transport)
 }

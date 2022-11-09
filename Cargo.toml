@@ -5,7 +5,7 @@ edition = "2021"
 description = """
 Libp2p quick test
 """
-rust-version = "1.60"
+rust-version = "1.65"
 license = "Apache-2.0 OR MIT"
 repository = "https://github.com/dariusc93/libp2p-quic-test"
 authors = ["Darius Clark"]
@@ -35,7 +35,13 @@ libp2p = { version = "0.50", features = [
     "quic",
     "tls",
 ] }
-env_logger = "0.9"
+
+tracing = { default-features = false, features = ["log"], version = "0.1" }
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+tracing-appender = "0.2"
+
+clap = { version = "4.0", features = ["derive"] }
+
 tokio = { version = "1", features = ["full"] }
 futures = { version = "0.3" }
 futures-timer = "3.0"
@@ -43,3 +49,7 @@ anyhow = { version = "1" }
 
 [patch.crates-io]
 libp2p = { git = "https://github.com/kpp/rust-libp2p", branch = "libp2p-quic" }
+
+[target.x86_64-unknown-linux-gnu]
+linker = "/usr/bin/clang"
+rustflags = ["-Clink-arg=-fuse-ld=lld", "-Clink-arg=-Wl,--no-rosegment"]

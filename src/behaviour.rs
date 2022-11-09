@@ -1,4 +1,5 @@
 use libp2p::identity::Keypair;
+use libp2p::swarm::ConnectionLimits;
 use libp2p::{swarm::behaviour::toggle::Toggle, NetworkBehaviour, Swarm};
 
 use libp2p::{
@@ -21,7 +22,7 @@ pub struct Behaviour {
     pub relay_client: Toggle<RelayClient>,
     pub dcutr: Toggle<DcutrBehaviour>,
     pub autonat: Autonat,
-    pub keep_alive: KeepAliveBehaviour,
+    pub keep_alive: Toggle<KeepAliveBehaviour>,
     pub kademlia: Kademlia<MemoryStore>,
     pub identify: Identify,
     pub ping: Ping,
@@ -29,7 +30,12 @@ pub struct Behaviour {
 }
 
 impl Behaviour {
-    pub fn new(keypair: Keypair, hole_punching: bool) -> anyhow::Result<Swarm<Self>> {
+    pub fn new(
+        keypair: Keypair,
+        hole_punching: bool,
+        quic: bool,
+        limit: Option<u32>,
+    ) -> anyhow::Result<Swarm<Self>> {
         let peer_id = keypair.public().to_peer_id();
 
         let mdns = Some(Mdns::new(MdnsConfig::default())?).into();
@@ -39,7 +45,7 @@ impl Behaviour {
         let store = MemoryStore::new(peer_id);
         let kad_config = KademliaConfig::default();
         let kademlia = Kademlia::with_config(peer_id, store, kad_config);
-        let keep_alive = KeepAliveBehaviour::default();
+        let keep_alive = Toggle::from(Some(KeepAliveBehaviour::default()));
         let dcutr = Toggle::from(hole_punching.then_some(DcutrBehaviour::new()));
         let (relay_client, transport) = match hole_punching {
             true => {
@@ -59,10 +65,19 @@ impl Behaviour {
             ping,
             keep_alive,
         };
-        let transport = transport::build_transport(keypair, transport)?;
+
+        let transport = transport::build_transport(keypair, quic, transport)?;
 
         let swarm = libp2p::swarm::SwarmBuilder::new(transport, behaviour, peer_id)
             .dial_concurrency_factor(16_u8.try_into().unwrap())
+            .connection_limits(
+                ConnectionLimits::default()
+                    .with_max_pending_incoming(Some(20))
+                    .with_max_pending_outgoing(Some(20))
+                    .with_max_established_per_peer(Some(10))
+                    .with_max_established_incoming(limit)
+                    .with_max_established_outgoing(limit),
+            )
             .executor(Box::new(|fut| {
                 tokio::spawn(fut);
             }))
