@@ -34,6 +34,7 @@ impl Behaviour {
         keypair: Keypair,
         hole_punching: bool,
         quic: bool,
+        keep_alive: bool,
         limit: Option<u32>,
     ) -> anyhow::Result<Swarm<Self>> {
         let peer_id = keypair.public().to_peer_id();
@@ -45,7 +46,7 @@ impl Behaviour {
         let store = MemoryStore::new(peer_id);
         let kad_config = KademliaConfig::default();
         let kademlia = Kademlia::with_config(peer_id, store, kad_config);
-        let keep_alive = Toggle::from(Some(KeepAliveBehaviour::default()));
+        let keep_alive = Toggle::from(keep_alive.then(KeepAliveBehaviour::default));
         let dcutr = Toggle::from(hole_punching.then_some(DcutrBehaviour::new()));
         let (relay_client, transport) = match hole_punching {
             true => {

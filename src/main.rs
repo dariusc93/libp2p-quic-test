@@ -33,6 +33,10 @@ struct Opt {
     listen_quic_only: bool,
     #[clap(long)]
     query_peer: Option<PeerId>,
+    #[clap(long)]
+    keep_alive: bool,
+    #[clap(long)]
+    limit: Option<u32>,
 }
 
 #[tokio::main]
@@ -43,7 +47,7 @@ async fn main() -> anyhow::Result<()> {
     let peer_id = keypair.public().to_peer_id();
 
     println!("Node PeerId: {peer_id}");
-    let mut swarm = behaviour::Behaviour::new(keypair, opt.hole_punching, opt.quic, Some(256))?;
+    let mut swarm = behaviour::Behaviour::new(keypair, opt.hole_punching, opt.quic, opt.keep_alive, opt.limit)?;
 
     let bootaddr = Multiaddr::from_str("/dnsaddr/bootstrap.libp2p.io")?;
     for peer in &BOOTNODES {
